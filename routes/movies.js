@@ -1,6 +1,9 @@
 import express from 'express';
 import fs from "fs/promises";
 import path from "path";
+import { validateIfMovieExists } from '../middleware/middleware.js';
+
+
 
 const router = express.Router();
 
@@ -24,36 +27,23 @@ const writeMoviesToFile = async (movies) => {
         throw error;
     }
 };
-
+let movies = await readMoviesFromFile();
 router.get('/', async (req, res) => {
     try {
-        let movies = await readMoviesFromFile();
+       
         res.json(movies);
     } catch (error) {
         res.status(500).send('Greska kod citanja podataka');
     }
 });
 
-router.get('/:id', async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-        return res.status(400).json({ message: 'krivi id' });
-    }
+const uzmiFilm=()=>movies;
 
-    try {
-        const movies = await readMoviesFromFile();
-        const movie = movies.find(m => m.id === id);
+router.get('/:id', validateIfMovieExists(uzmiFilm), (req, res) => {
+    console.log(req.id)
 
-        if (movie) {
-            res.json(movie);
-        } else {
-            res.status(404).json({ message: 'film nije pronaden.' });
-        }
-    } catch (error) {
-        res.status(500).send('greska prilikom citanja podataka');
-    }
+    res.json(req.movie); 
 });
-
 router.post('/', async (req, res) => {
     const { id, title, description, releaseYear, genre } = req.body;
 

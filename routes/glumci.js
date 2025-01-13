@@ -1,13 +1,16 @@
 import express from 'express';
 import fs from "fs/promises";
 import path from "path";
+import { validateIfActorExists } from '../middleware/middleware.js';
+import { logMiddleware } from '../middleware/middleware.js';
+
 
 const router = express.Router();
 
 
 const glumciFilePath = path.join('data', 'glumci.json');
 
-const readGlumciFromFile = async () => {
+export const readGlumciFromFile = async () => {
     try {
         const data = await fs.readFile(glumciFilePath, 'utf8');
         return JSON.parse(data);
@@ -17,7 +20,7 @@ const readGlumciFromFile = async () => {
     }
 };
 
-const writeGlumciToFile = async (glumci) => {
+export const writeGlumciToFile = async (glumci) => {
     try {
         await fs.writeFile(glumciFilePath, JSON.stringify(glumci, null, 2));
     } catch (error) {
@@ -25,35 +28,24 @@ const writeGlumciToFile = async (glumci) => {
         throw error;
     }
 };
+let actors = await readGlumciFromFile();
 
 router.get('/', async (req, res) => {
     try {
-        let actors = await readGlumciFromFile();
         res.json(actors);
     } catch (error) {
         res.status(500).send('Greska kod citanja podataka o glumcima');
     }
 });
 
-router.get('/:id', async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-        return res.status(400).json({ message: 'krivi id' });
-    }
+const uzmiGlumce=()=>actors;
 
-    try {
-        const actors = await readGlumciFromFile();
-        const actor = actors.find(a => a.id === id);
+router.get('/:id', validateIfActorExists(uzmiGlumce), (req, res) => {
+    console.log(req.id)
 
-        if (actor) {
-            res.json(actor);
-        } else {
-            res.status(404).json({ message: 'glumac nije pronaden.' });
-        }
-    } catch (error) {
-        res.status(500).send('greska prilikom citanja podataka o glumcima');
-    }
+    res.json(req.actor); 
 });
+
 
 router.post("/", async (req, res) => {
     const { id, name, age, movies } = req.body;

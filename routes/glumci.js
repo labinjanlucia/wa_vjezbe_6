@@ -61,9 +61,9 @@ router.post("/", validateActor, async (req, res) => {
         actors.push(newActor);
         
 
-        res.status(201).send('Actor added successfully.');
+        res.status(201).send('  glumac uspjesno dodan.');
     } catch (error) {
-        res.status(500).send('Error saving actor data.');
+        res.status(500).send('greska prilikom spremanja');
     }
 });
 
@@ -81,7 +81,7 @@ router.patch('/glumci/:id',validateActor, async (req, res) => {
 
         res.json(actors[actorIndex]);
     } catch (error) {
-        res.status(500).send('Error updating actor data.');
+        res.status(500).send('greska prilikom updata');
     }
 });
 

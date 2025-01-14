@@ -2,7 +2,10 @@ import express from 'express';
 import fs from "fs/promises";
 import path from "path";
 import { validateIfActorExists } from '../middleware/middleware.js';
-import { logMiddleware } from '../middleware/middleware.js';
+import { validateId } from '../middleware/middleware.js';
+import { validateNameandchange  } from '../middleware/middleware.js';
+import { validateActor  } from '../middleware/middleware.js';
+
 
 
 const router = express.Router();
@@ -30,7 +33,8 @@ export const writeGlumciToFile = async (glumci) => {
 };
 let actors = await readGlumciFromFile();
 
-router.get('/', async (req, res) => {
+router.get('/',validateNameandchange, async (req, res) => {
+    
     try {
         res.json(actors);
     } catch (error) {
@@ -40,30 +44,22 @@ router.get('/', async (req, res) => {
 
 const uzmiGlumce=()=>actors;
 
-router.get('/:id', validateIfActorExists(uzmiGlumce), (req, res) => {
+router.get('/:id', validateId, validateIfActorExists(uzmiGlumce), (req, res) => {
     console.log(req.id)
 
     res.json(req.actor); 
 });
 
 
-router.post("/", async (req, res) => {
+router.post("/", validateActor, async (req, res) => {
     const { id, name, age, movies } = req.body;
 
-    if (!id || !name || !age || !movies) {
-        return res.status(400).send('All fields are required: id, name, age, movies.');
-    }
-
+   
     try {
-        const actors = await readGlumciFromFile();
-
-        if (actors.some(actor => actor.id === id)) {
-            return res.status(400).send('Actor with the same ID already exists.');
-        }
-
+        
         const newActor = { id, name, age, movies };
         actors.push(newActor);
-        await writeGlumciToFile(actors);
+        
 
         res.status(201).send('Actor added successfully.');
     } catch (error) {
@@ -71,19 +67,14 @@ router.post("/", async (req, res) => {
     }
 });
 
-router.patch('/glumci/:id', async (req, res) => {
+router.patch('/glumci/:id',validateActor, async (req, res) => {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-        return res.status(400).json({ message: 'Invalid ID format.' });
-    }
+    
 
     try {
         const actors = await readGlumciFromFile();
         const actorIndex = actors.findIndex(a => a.id === id);
 
-        if (actorIndex === -1) {
-            return res.status(404).json({ message: 'Actor not found.' });
-        }
 
         actors[actorIndex] = { ...actors[actorIndex], ...req.body };
         await writeGlumciToFile(actors);

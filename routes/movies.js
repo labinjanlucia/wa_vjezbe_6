@@ -2,6 +2,9 @@ import express from 'express';
 import fs from "fs/promises";
 import path from "path";
 import { validateIfMovieExists } from '../middleware/middleware.js';
+import { validateId } from '../middleware/middleware.js';
+import { validateMovie, validateMovieUpdate } from '../middleware/middleware.js';
+import { validateRange } from '../middleware/middleware.js';
 
 
 
@@ -28,7 +31,7 @@ const writeMoviesToFile = async (movies) => {
     }
 };
 let movies = await readMoviesFromFile();
-router.get('/', async (req, res) => {
+router.get('/',validateRange, async (req, res) => {
     try {
        
         res.json(movies);
@@ -39,28 +42,18 @@ router.get('/', async (req, res) => {
 
 const uzmiFilm=()=>movies;
 
-router.get('/:id', validateIfMovieExists(uzmiFilm), (req, res) => {
-    console.log(req.id)
+router.get('/:id', validateId, validateIfMovieExists(uzmiFilm), (req, res) => {
+    
 
     res.json(req.movie); 
 });
-router.post('/', async (req, res) => {
-    const { id, title, description, releaseYear, genre } = req.body;
-
-    if (!id || !title || !description || !releaseYear || !genre) {
-        return res.status(400).send('Sva polja rebaju biti popunjena');
-    }
+router.post('/', validateMovie, async (req, res) => {
+    const { id, title, year, director, genre } = req.body;
 
     try {
-        const movies = await readMoviesFromFile();
 
-        if (movies.some(movie => movie.id === id)) {
-            return res.status(400).send('Vec postoji film s tim id.');
-        }
-
-        const newMovie = { id, title, description, releaseYear, genre };
+        const newMovie = { id, title, year, director, genre };
         movies.push(newMovie);
-        await writeMoviesToFile(movies);
 
         res.status(201).send('Film uspjesno dodan.');
     } catch (error) {
@@ -68,11 +61,9 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id',validateMovieUpdate, async (req, res) => {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-        return res.status(400).json({ message: 'Krivi id format.' });
-    }
+    
 
     try {
         const movies = await readMoviesFromFile();
